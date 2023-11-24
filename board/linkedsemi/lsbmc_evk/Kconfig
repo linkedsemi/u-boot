@@ -1,0 +1,19 @@
+if TARGET_LSBMC_EVK
+
+config SYS_BOARD
+    default "lsbmc_evk"
+
+config SYS_VENDOR
+    default "linkedsemi"
+
+config SYS_CONFIG_NAME
+    default "lsbmc_evk"
+
+config SYS_CPU
+    default "generic"
+
+config BOARD_SPECIFIC_OPTIONS # dummy
+	def_bool y
+	select GENERIC_RISCV
+    imply SMP
+endif
