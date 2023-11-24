@@ -1,0 +1,8 @@
+#ifndef LSBMC_EVK_CONFIG_H_
+#define LSBMC_EVK_CONFIG_H_
+
+
+//#define CONFIG_SYS_MALLOC_LEN 0x800000
+
+
+#endif
