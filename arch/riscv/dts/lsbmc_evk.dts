@@ -131,7 +131,7 @@
 					      <&cpu3_intc 11>, <&cpu3_intc 9>;
 			interrupt-controller;
 			#address-cells = <0>;
-			#interrupt-cells = <2>;
+			#interrupt-cells = <1>;
 			riscv,ndev = <240>;
             riscv,max-priority = <7>;
 		};
@@ -146,9 +146,9 @@
 		};
 
 		uart0: serial@10015000 {
-			compatible = "snps,dw-apb-uart";
+			compatible = "ns16550";
 			reg = <0x00 0x10015000 0x0 0x1000>;
-			interrupts = <36 1>;
+			interrupts = <16>;
             clock-frequency = <50000000>;
 			reg-shift = <2>;
 			reg-io-width = <4>;
