@@ -123,7 +123,7 @@
 		ranges;
 
 		plic: interrupt-controller@b0000000 {
-			compatible = "riscv,plic0";
+			compatible =  "thead,c900-plic";
 			reg = <0x00 0xb0000000 0x0 0x01000000>;
 			interrupts-extended = <&cpu0_intc 11>, <&cpu0_intc 9>,
 					      <&cpu1_intc 11>, <&cpu1_intc 9>,
