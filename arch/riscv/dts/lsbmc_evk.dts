@@ -5,21 +5,37 @@
     #address-cells = <2>;
 	#size-cells = <2>;
 	chosen {
-		bootargs = "earlycon console=ttyS0,115200 norandmaps no_check_unaligned_access no4lvl debug";
-		stdout-path = &uart8;
+		//bootargs = "earlycon console=ttyS0,1152000 norandmaps no4lvl debug";
+		bootargs = "earlycon console=ttyS0,1152000 norandmaps no4lvl loglevel=8 ignore_loglevel dyndbg=\"file drivers/usb/host/xhci* +p; file drivers/usb/core/hub.c +p; file drivers/net/ethernet/stmicro/stmmac* +p;\"";
+		// bootargs = "earlycon console=ttyS0,1152000 norandmaps no4lvl loglevel=8 ignore_loglevel dyndbg=\"file drivers/net/ethernet/stmicro/stmmac* +p;\"";
+		stdout-path = &uart12;
 		linux,initrd-start = <0x1 0x80000000>; 
-		linux,initrd-end = <0x1 0x83700e00>; 
+		// linux,initrd-end = <0x1 0x83700e00>; //xuantie-rootfs
+		linux,initrd-end = <0x1 0x80369a00>;
 	};
 
     memory@c0000000 {
 		device_type = "memory";
 		reg = <0x0 0xc0000000 0x1 0x00000000>;
 	};
+	reserved-memory {
+		#address-cells = <2>;
+		#size-cells = <2>;
+		ranges;
 
+		vga0: vga@d0000000 {
+			reg = <0x0 0xd0000000 0x0 0x1000000>;
+			no-map;
+		};
+		vbios0: vbios@d1000000 {
+			reg = <0x0 0xd1000000 0x0 0x10000>;
+			no-map;
+		};
+	};
 	cpus: cpus {
 		#address-cells = <1>;
 		#size-cells = <0>;
-		timebase-frequency = <3703700>;
+		timebase-frequency = <37037000>;
 
 		c908_0: cpu@0 {
 			compatible = "thead,c908", "riscv";
@@ -160,7 +176,7 @@
             riscv,max-priority = <7>;
 		};
 
-		clint: timer@4004000000 {
+		clint: clint@4004000000 {
 			compatible = "thead,c900-clint";
 			reg = <0x40 0x04000000 0x0 0x00010000>;
 			interrupts-extended = <&cpu0_intc 3>, <&cpu0_intc 7>,
@@ -169,15 +185,183 @@
 					      <&cpu3_intc 3>, <&cpu3_intc 7>;
 		};
 
-		uart8: serial@42100000 {
-			compatible = "ns16550";
-			reg = <0x00 0x42100000 0x0 0x1000>;
-			interrupts = <120 4>;
-            clock-frequency = <3703700>;
-			current-speed = <115200>;
+		uart12: serial@9600e000 {
+			compatible = "snps,dw-apb-uart";
+			reg = <0x00 0x9600e000 0x0 0x1000>;
+			interrupts = <71 4>;
+            clock-frequency = <37037000>;
+			current-speed = <1152000>;
 			reg-shift = <2>;
 			reg-io-width = <4>;
 			status = "okay";
+		};
+		// rgmii0: ethernet@95000000 {
+		// 	compatible = "snps,dwmac","snps,dwmac-5.20";
+		// 	reg = <0x0 0x95000000 0x0 0x4000>;
+		// 	interrupts = <101 4>;
+		// 	interrupt-names = "macirq";
+		// 	phy-mode = "rgmii";
+		// 	rx-fifo-depth = <2048>;
+		// 	tx-fifo-depth = <2048>;
+		// 	snps,ps-speed = <1000>;
+		// 	snps,tso;
+		// 	snps,txpbl = <16>;
+		// 	snps,rxpbl = <16>;
+		// 	status = "okay";
+
+		// 	// snps,mtl-rx-config = <&mtl_rx_setup_1>;
+		// 	// snps,mtl-tx-config = <&mtl_tx_setup_1>;
+		// 	// snps,axi-config = <&stmmac_axi_config_0>;
+		// 	// stmmac_axi_config_0: stmmac-axi-config {
+		// 	// 	snps,wr_osr_lmt = <0x7>;
+		// 	// 	snps,rd_osr_lmt = <0x7>;
+		// 	// 	snps,blen = <0 0 0 0 16 8 4>;
+		// 	// };
+		// 	// mtl_rx_setup_1: rx-queues-config {
+		// 	// 	snps,rx-queues-to-use = <4>;
+		// 	// 	queue0 {};
+		// 	// 	queue1 {};
+		// 	// 	queue2 {};
+		// 	// 	queue3 {};
+		// 	// };
+
+		// 	// mtl_tx_setup_1: tx-queues-config {
+		// 	// 	snps,tx-queues-to-use = <4>;
+		// 	// 	queue0 {};
+		// 	// 	queue1 {};
+		// 	// 	queue2 {};
+		// 	// 	queue3 {};
+		// 	// };
+		// 	fixed-link {
+		// 		speed = <1000>;
+		// 		full-duplex;
+		// 	};
+		// };
+		sgmii0: ethernet@65000000 {
+			compatible = "snps,dwmac","snps,dwmac-5.20";
+			reg = <0x0 0x65000000 0x0 0x10000>;
+			interrupts = <13 4>;
+			interrupt-names = "macirq";
+			phy-mode = "sgmii";
+			rx-fifo-depth = <2048>;
+			tx-fifo-depth = <2048>;
+			snps,ps-speed = <1000>;
+			snps,tso;
+			snps,txpbl = <16>;
+			snps,rxpbl = <16>;
+			status = "okay";
+
+			snps,mtl-rx-config = <&mtl_rx_setup_1>;
+			snps,mtl-tx-config = <&mtl_tx_setup_1>;
+			snps,axi-config = <&stmmac_axi_config_0>;
+			stmmac_axi_config_0: stmmac-axi-config {
+				snps,wr_osr_lmt = <0x7>;
+				snps,rd_osr_lmt = <0x7>;
+				snps,blen = <0 0 0 0 16 8 4>;
+			};
+			mtl_rx_setup_1: rx-queues-config {
+				snps,rx-queues-to-use = <4>;
+				queue0 {};
+				queue1 {};
+				queue2 {};
+				queue3 {};
+			};
+
+			mtl_tx_setup_1: tx-queues-config {
+				snps,tx-queues-to-use = <4>;
+				queue0 {};
+				queue1 {};
+				queue2 {};
+				queue3 {};
+			};
+			fixed-link {
+				speed = <1000>;
+				full-duplex;
+			};
+		};
+
+		xhci0: usb@94000000 {
+			compatible = "generic-xhci";
+			reg = <0x0 0x94000000 0x0 0x10000>;
+			interrupts = <65 4>;
+			// phys = <&usb_phy PHY_TYPE_USB3>;
+			status = "okay";
+
+		};
+
+		pipe_syscon: syscon@90928000 {
+			compatible = "syscon";
+			reg = <0x0 0x90928000 0x0 0x1000>;
+		};
+
+		pcie0_ep: pcie-ep@90000000 {
+			#address-cells = <2>;
+			#size-cells = <2>;
+			ranges;
+			compatible = "linkedsemi,ls-pcie-ep","simple-mfd";
+			reg = <0x0 0x90000000 0x0 0x100000>,
+				<0x0 0x90100000 0x0 0x100000>,
+				<0x0 0x90300000 0x0 0x4000>,
+				<0x0 0x90380000 0x0 0x2000>,
+				<0x0 0x70000000 0x0 0x10000000>,
+				<0x0 0x96012000 0x0 0x1000>,
+				<0x0 0x94000000 0x0 0x100000>,
+				<0x0 0x90900000 0x0 0x10000>,
+				<0x0 0x6a8 0x0 0x480>,
+				<0x0 0xba0 0x0 0x6c>,
+				<0x0 0xc90 0x0 0x3c>,
+				<0x0 0xb0000018 0x0 0x8>,
+				<0x0 0xb0000038 0x0 0x8>,
+				<0x40000000 0x0 0x100 0x0>;
+			reg-names = "dbi","dbi2","atu","dma","addr_space","xhci_vhub",
+				"xhci_hc","vpn","pipe_cfg0","pipe_cfg1","pipe_cfg2",
+				"xhci_msi","vga_msi","xhci_hc_range";
+			memory-region = <&vga0>, <&vbios0>;
+			memory-region-names = "vga0", "vbios0";
+			interrupts =<198 4>,
+						<197 4>,
+						<196 4>,
+						<195 4>,
+						<194 4>,
+						<192 4>,
+						<191 4>;
+			interrupt-names = "dma","smlh_link","ip","radm_to","aux","msg","misc";
+			pipesys-cfg = <&pipe_syscon>;
+
+
+
+			// clocks = <&zynqmp_clk PL0_REF>;
+			// clock-names = "pl0-clk";
+			// clocks = <&cru ACLK_PCIE>, <&cru ACLK_PERF_PCIE>,
+			// 	 <&cru PCLK_PCIE>, <&cru SCLK_PCIE_PM>;
+			// clock-names = "aclk", "aclk-perf",
+			// 	      "hclk", "pm";
+			max-functions = /bits/ 8 <8>;
+			num-lanes = <1>;
+			max-link-speed = <1>;
+			// resets = <&cru SRST_PCIE_CORE>, <&cru SRST_PCIE_MGMT>,
+			// 	 <&cru SRST_PCIE_MGMT_STICKY>, <&cru SRST_PCIE_PIPE>,
+			// 	 <&cru SRST_PCIE_PM>, <&cru SRST_P_PCIE>,
+			// 	 <&cru SRST_A_PCIE>;
+			// reset-names = "core", "mgmt", "mgmt-sticky", "pipe",
+			// 	      "pm", "pclk", "aclk";
+			// phys = <&pcie_phy 0>, <&pcie_phy 1>,
+			//        <&pcie_phy 2>, <&pcie_phy 3>;
+			// phy-names = "pcie-phy-0", "pcie-phy-1",
+			// 	    "pcie-phy-2", "pcie-phy-3";
+			// rockchip,max-outbound-regions = <32>;
+			// pinctrl-names = "default";
+			// pinctrl-0 = <&pcie_clkreqnb_cpm>;
+			status = "okay";
+			mctp_pcie0: mctp-pcie@0 {
+				compatible = "linkedsemi,ls-pcie-mctp";
+				reg = <0x0 0xbac 0x0 0x50>,
+					<0x0 0xb44 0x0 0x8>,
+					<0x0 0xbfc 0x0 0x10>;
+				reg-names = "rx", "tx","bdf";
+				interrupts = <193 4>;
+				status = "okay";
+			};
 		};
     };
 };
