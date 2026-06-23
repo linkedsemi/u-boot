@@ -59,7 +59,7 @@ from Texas Instruments. The tools used to generate boot images for secure
 devices are part of a secure development package (SECDEV) that can be
 downloaded from:
 
-	http://www.ti.com/mysecuresoftware (login required)
+	https://www.ti.com/mysecuresoftware (login required)
 
 The secure development package is access controlled due to NDA and export
 control restrictions. Access must be requested and granted by TI before the
@@ -84,8 +84,7 @@ bootable image was not created.
 
 Within the SECDEV package exists an image creation script:
 
-.. prompt:: bash
-   :prompts: $
+.. prompt:: bash $
 
    ${TI_SECURE_DEV_PKG}/scripts/create-boot-image.sh
 
@@ -97,8 +96,7 @@ possible.
 The script is basically the only required interface to the TI SECDEV
 package for creating a bootable SPL image for secure TI devices.
 
-.. prompt:: bash
-   :prompts: $
+.. prompt:: bash $
 
    create-boot-image.sh \
 		<IMAGE_FLAG> <INPUT_FILE> <OUTPUT_FILE> <SPL_LOAD_ADDR>
@@ -184,8 +182,7 @@ The exact details of the how the images are secured is handled by the
 SECDEV package. Within the SECDEV package exists a script to process
 an input binary image:
 
-.. prompt:: bash
-   :prompts: $
+.. prompt:: bash $
 
    ${TI_SECURE_DEV_PKG}/scripts/secure-binary-image.sh
 
@@ -206,8 +203,7 @@ only accessible when the ARM core is operating in the secure mode).
 Invoking the secure-binary-image script for Secure Devices
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. prompt:: bash
-   :prompts: $
+.. prompt:: bash $
 
    secure-binary-image.sh <INPUT_FILE> <OUTPUT_FILE>
 
@@ -247,8 +243,7 @@ into memory, then written to NAND.
 
 2. Flashing NAND via MMC/SD
 
-.. prompt:: bash
-   :prompts: =>
+.. prompt:: bash =>
 
    # select BOOTSEL to MMC/SD boot and boot from MMC/SD card
    mmc rescan
@@ -279,7 +274,7 @@ into memory, then written to NAND.
 Falcon Mode
 -----------
 
-The default build includes "Falcon Mode" (see doc/README.falcon) via NAND,
+The default build includes :ref:`falcon-mode` via NAND,
 eMMC (or raw SD cards) and FAT SD cards.  Our default behavior currently is
 to read a 'c' on the console while in SPL at any point prior to loading the
 OS payload (so as soon as possible) to opt to booting full U-Boot.  Also
@@ -334,8 +329,7 @@ had a FAT partition (such as on a Beaglebone Black) it is not enough to
 write garbage into the area, you must delete it from the partition table
 first.
 
-.. prompt:: bash
-   :prompts: =>
+.. prompt:: bash =>
 
    # Ensure we are able to talk with this mmc device
    mmc rescan
@@ -360,14 +354,23 @@ first.
 Falcon Mode: FAT SD cards
 -------------------------
 
+Compile with additional changes in config variables in menuconfig:
+
+::
+
+   CONFIG_SPL_LEGACY_IMAGE_FORMAT=y # to support non-FIT images
+   CONFIG_LEGACY_IMAGE_FORMAT=y # if commented then SPL Legacy support stops
+   # CONFIG_SPL_ENV_IS_NOWHERE is not set
+   CONFIG_SPL_ENV_IS_IN_FAT=y
+
+
 In this case the additional file is written to the filesystem.  In this
 example we assume that the uImage and device tree to be used are already on
 the FAT filesystem (only the uImage MUST be for this to function
 afterwards) along with a Falcon Mode aware MLO and the FAT partition has
 already been created and marked bootable:
 
-.. prompt:: bash
-   :prompts: =>
+.. prompt:: bash =>
 
    mmc rescan
    # Load kernel and device tree into memory, perform export
@@ -386,8 +389,7 @@ This will print a number of lines and then end with something like:
 
 So then you:
 
-.. prompt:: bash
-   :prompts: =>
+.. prompt:: bash =>
 
    fatwrite mmc 0:1 0x80f80000 args 8928
 
@@ -400,8 +402,7 @@ already located on the NAND somewhere (such as filesystem or mtd partition)
 along with a Falcon Mode aware MLO written to the correct locations for
 booting and mtdparts have been configured correctly for the board:
 
-.. prompt:: bash
-   :prompts: =>
+.. prompt:: bash =>
 
    nand read ${loadaddr} kernel
    load nand rootfs ${fdtaddr} /boot/am335x-evm.dtb
@@ -425,8 +426,7 @@ The output of the 'dm tree' command shows which driver is bound to which
 device, so the user can easily configure their platform differently from
 the command line:
 
-.. prompt:: bash
-   :prompts: =>
+.. prompt:: bash =>
 
    dm tree
 
@@ -444,8 +444,7 @@ the command line:
 Typically here any network command performed using the usb_ether
 interface would work, while using other gadgets would fail:
 
-.. prompt:: bash
-   :prompts: =>
+.. prompt:: bash =>
 
    fastboot usb 0
 
@@ -462,8 +461,7 @@ least from a bootloader point of view). The solution here would be to
 use the unbind command specifying the class and index parameters (as
 shown above in the 'dm tree' output) to target the driver to unbind:
 
-.. prompt:: bash
-   :prompts: =>
+.. prompt:: bash =>
 
    unbind ethernet 1
 
@@ -471,8 +469,7 @@ The output of the 'dm tree' command now shows the availability of the
 first USB device controller, the fastboot gadget will now be able to
 bind with it:
 
-.. prompt:: bash
-   :prompts: =>
+.. prompt:: bash =>
 
    dm tree
 

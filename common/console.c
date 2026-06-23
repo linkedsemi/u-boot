@@ -4,7 +4,8 @@
  * Paolo Scaffardi, AIRVENT SAM s.p.a - RIMINI(ITALY), arsenio@tin.it
  */
 
-#include <common.h>
+#define LOG_CATEGORY	LOGC_CONSOLE
+
 #include <console.h>
 #include <debug_uart.h>
 #include <display_options.h>
@@ -19,11 +20,14 @@
 #include <stdio_dev.h>
 #include <exports.h>
 #include <env_internal.h>
+#include <video_console.h>
 #include <watchdog.h>
 #include <asm/global_data.h>
 #include <linux/delay.h>
 
 DECLARE_GLOBAL_DATA_PTR;
+
+#define CSI "\x1b["
 
 static int on_console(const char *name, const char *value, enum env_op op,
 	int flags)
@@ -97,7 +101,7 @@ static void console_record_putc(const char c)
 	if (!(gd->flags & GD_FLG_RECORD))
 		return;
 	if  (gd->console_out.start &&
-	     !membuff_putbyte((struct membuff *)&gd->console_out, c))
+	     !membuf_putbyte((struct membuf *)&gd->console_out, c))
 		gd->flags |= GD_FLG_RECORD_OVF;
 }
 
@@ -108,7 +112,7 @@ static void console_record_puts(const char *s)
 	if  (gd->console_out.start) {
 		int len = strlen(s);
 
-		if (membuff_put((struct membuff *)&gd->console_out, s, len) !=
+		if (membuf_put((struct membuf *)&gd->console_out, s, len) !=
 		    len)
 			gd->flags |= GD_FLG_RECORD_OVF;
 	}
@@ -121,7 +125,7 @@ static int console_record_getc(void)
 	if (!gd->console_in.start)
 		return -1;
 
-	return membuff_getbyte((struct membuff *)&gd->console_in);
+	return membuf_getbyte((struct membuf *)&gd->console_in);
 }
 
 static int console_record_tstc(void)
@@ -129,7 +133,7 @@ static int console_record_tstc(void)
 	if (!(gd->flags & GD_FLG_RECORD))
 		return 0;
 	if (gd->console_in.start) {
-		if (membuff_peekbyte((struct membuff *)&gd->console_in) != -1)
+		if (membuf_peekbyte((struct membuf *)&gd->console_in) != -1)
 			return 1;
 	}
 	return 0;
@@ -187,6 +191,7 @@ static int console_setfile(int file, struct stdio_dev * dev)
 		/* Assign the new device (leaving the existing one started) */
 		stdio_devices[file] = dev;
 
+#ifndef CONFIG_XPL_BUILD
 		/*
 		 * Update monitor functions
 		 * (to use the console stuff by other applications)
@@ -203,8 +208,8 @@ static int console_setfile(int file, struct stdio_dev * dev)
 			gd->jt->printf = printf;
 			break;
 		}
+#endif
 		break;
-
 	default:		/* Invalid file ID */
 		error = -1;
 	}
@@ -352,6 +357,24 @@ void console_puts_select_stderr(bool serial_only, const char *s)
 {
 	if (gd->flags & GD_FLG_DEVINIT)
 		console_puts_select(stderr, serial_only, s);
+}
+
+int console_printf_select_stderr(bool serial_only, const char *fmt, ...)
+{
+	char buf[CONFIG_SYS_PBSIZE];
+	va_list args;
+	int ret;
+
+	va_start(args, fmt);
+
+	/* For this to work, buf must be larger than anything we ever want to
+	 * print.
+	 */
+	ret = vscnprintf(buf, sizeof(buf), fmt, args);
+	va_end(args);
+	console_puts_select_stderr(serial_only, buf);
+
+	return ret;
 }
 
 static void console_puts(int file, const char *s)
@@ -584,7 +607,7 @@ int getchar(void)
 	if (IS_ENABLED(CONFIG_DISABLE_CONSOLE) && (gd->flags & GD_FLG_DISABLE_CONSOLE))
 		return 0;
 
-	if (!gd->have_console)
+	if (!(gd->flags & GD_FLG_HAVE_CONSOLE))
 		return 0;
 
 	ch = console_record_getc();
@@ -605,7 +628,7 @@ int tstc(void)
 	if (IS_ENABLED(CONFIG_DISABLE_CONSOLE) && (gd->flags & GD_FLG_DISABLE_CONSOLE))
 		return 0;
 
-	if (!gd->have_console)
+	if (!(gd->flags & GD_FLG_HAVE_CONSOLE))
 		return 0;
 
 	if (console_record_tstc())
@@ -713,7 +736,7 @@ void putc(const char c)
 	if (IS_ENABLED(CONFIG_DISABLE_CONSOLE) && (gd->flags & GD_FLG_DISABLE_CONSOLE))
 		return;
 
-	if (!gd->have_console)
+	if (!(gd->flags & GD_FLG_HAVE_CONSOLE))
 		return pre_console_putc(c);
 
 	if (gd->flags & GD_FLG_DEVINIT) {
@@ -740,11 +763,7 @@ void puts(const char *s)
 	}
 
 	if (IS_ENABLED(CONFIG_DEBUG_UART) && !(gd->flags & GD_FLG_SERIAL_READY)) {
-		while (*s) {
-			int ch = *s++;
-
-			printch(ch);
-		}
+		printascii(s);
 		return;
 	}
 
@@ -757,7 +776,7 @@ void puts(const char *s)
 	if (IS_ENABLED(CONFIG_DISABLE_CONSOLE) && (gd->flags & GD_FLG_DISABLE_CONSOLE))
 		return;
 
-	if (!gd->have_console)
+	if (!(gd->flags & GD_FLG_HAVE_CONSOLE))
 		return pre_console_puts(s);
 
 	if (gd->flags & GD_FLG_DEVINIT) {
@@ -791,7 +810,7 @@ void flush(void)
 	if (IS_ENABLED(CONFIG_DISABLE_CONSOLE) && (gd->flags & GD_FLG_DISABLE_CONSOLE))
 		return;
 
-	if (!gd->have_console)
+	if (!(gd->flags & GD_FLG_HAVE_CONSOLE))
 		return;
 
 	if (gd->flags & GD_FLG_DEVINIT) {
@@ -809,22 +828,25 @@ int console_record_init(void)
 {
 	int ret;
 
-	ret = membuff_new((struct membuff *)&gd->console_out,
-			  gd->flags & GD_FLG_RELOC ?
-				  CONFIG_CONSOLE_RECORD_OUT_SIZE :
-				  CONFIG_CONSOLE_RECORD_OUT_SIZE_F);
+	ret = membuf_new((struct membuf *)&gd->console_out,
+			 gd->flags & GD_FLG_RELOC ?
+				CONFIG_CONSOLE_RECORD_OUT_SIZE :
+				CONFIG_CONSOLE_RECORD_OUT_SIZE_F);
 	if (ret)
 		return ret;
-	ret = membuff_new((struct membuff *)&gd->console_in,
-			  CONFIG_CONSOLE_RECORD_IN_SIZE);
+	ret = membuf_new((struct membuf *)&gd->console_in,
+			 CONFIG_CONSOLE_RECORD_IN_SIZE);
+
+	/* Start recording from the beginning */
+	gd->flags |= GD_FLG_RECORD;
 
 	return ret;
 }
 
 void console_record_reset(void)
 {
-	membuff_purge((struct membuff *)&gd->console_out);
-	membuff_purge((struct membuff *)&gd->console_in);
+	membuf_purge((struct membuf *)&gd->console_out);
+	membuf_purge((struct membuf *)&gd->console_in);
 	gd->flags &= ~GD_FLG_RECORD_OVF;
 }
 
@@ -840,19 +862,26 @@ int console_record_readline(char *str, int maxlen)
 {
 	if (gd->flags & GD_FLG_RECORD_OVF)
 		return -ENOSPC;
+	if (console_record_isempty())
+		return -ENOENT;
 
-	return membuff_readline((struct membuff *)&gd->console_out, str,
-				maxlen, '\0');
+	return membuf_readline((struct membuf *)&gd->console_out, str,
+				maxlen, '\0', false);
 }
 
 int console_record_avail(void)
 {
-	return membuff_avail((struct membuff *)&gd->console_out);
+	return membuf_avail((struct membuf *)&gd->console_out);
+}
+
+bool console_record_isempty(void)
+{
+	return membuf_isempty((struct membuf *)&gd->console_out);
 }
 
 int console_in_puts(const char *str)
 {
-	return membuff_put((struct membuff *)&gd->console_in, str, strlen(str));
+	return membuf_put((struct membuf *)&gd->console_in, str, strlen(str));
 }
 
 #endif
@@ -862,7 +891,7 @@ static int ctrlc_disabled = 0;	/* see disable_ctrl() */
 static int ctrlc_was_pressed = 0;
 int ctrlc(void)
 {
-	if (!ctrlc_disabled && gd->have_console) {
+	if (!ctrlc_disabled && (gd->flags & GD_FLG_HAVE_CONSOLE)) {
 		if (tstc()) {
 			switch (getchar()) {
 			case 0x03:		/* ^C - Control C */
@@ -931,11 +960,6 @@ struct stdio_dev *console_search_dev(int flags, const char *name)
 	struct stdio_dev *dev;
 
 	dev = stdio_get_by_name(name);
-#ifdef CONFIG_VIDCONSOLE_AS_LCD
-	if (!dev && !strcmp(name, CONFIG_VIDCONSOLE_AS_NAME))
-		dev = stdio_get_by_name("vidconsole");
-#endif
-
 	if (dev && (dev->flags & flags))
 		return dev;
 
@@ -1001,7 +1025,7 @@ int console_announce_r(void)
 /* Called before relocation - use serial functions */
 int console_init_f(void)
 {
-	gd->have_console = 1;
+	gd->flags |= GD_FLG_HAVE_CONSOLE;
 
 	console_update_silent();
 
@@ -1010,9 +1034,44 @@ int console_init_f(void)
 	return 0;
 }
 
+int console_clear(void)
+{
+	/*
+	 * Send clear screen and home
+	 *
+	 * FIXME(Heinrich Schuchardt <xypron.glpk@gmx.de>): This should go
+	 * through an API and only be written to serial terminals, not video
+	 * displays
+	 */
+	printf(CSI "2J" CSI "1;1H");
+	if (IS_ENABLED(CONFIG_VIDEO_ANSI))
+		return 0;
+
+	if (IS_ENABLED(CONFIG_VIDEO)) {
+		struct udevice *dev;
+		int ret;
+
+		ret = uclass_first_device_err(UCLASS_VIDEO_CONSOLE, &dev);
+		if (ret)
+			return ret;
+		ret = vidconsole_clear_and_reset(dev);
+		if (ret)
+			return ret;
+	}
+
+	return 0;
+}
+
+static char *get_stdio(const u8 std)
+{
+	return stdio_devices[std] ? stdio_devices[std]->name : "No devices available!";
+}
+
 static void stdio_print_current_devices(void)
 {
-	char *stdinname, *stdoutname, *stderrname;
+	char *stdinname = NULL;
+	char *stdoutname = NULL;
+	char *stderrname = NULL;
 
 	if (CONFIG_IS_ENABLED(CONSOLE_MUX) &&
 	    CONFIG_IS_ENABLED(SYS_CONSOLE_IS_IN_ENV)) {
@@ -1020,21 +1079,11 @@ static void stdio_print_current_devices(void)
 		stdinname  = env_get("stdin");
 		stdoutname = env_get("stdout");
 		stderrname = env_get("stderr");
-
-		stdinname = stdinname ? : "No input devices available!";
-		stdoutname = stdoutname ? : "No output devices available!";
-		stderrname = stderrname ? : "No error devices available!";
-	} else {
-		stdinname = stdio_devices[stdin] ?
-			stdio_devices[stdin]->name :
-			"No input devices available!";
-		stdoutname = stdio_devices[stdout] ?
-			stdio_devices[stdout]->name :
-			"No output devices available!";
-		stderrname = stdio_devices[stderr] ?
-			stdio_devices[stderr]->name :
-			"No error devices available!";
 	}
+
+	stdinname = stdinname ? : get_stdio(stdin);
+	stdoutname = stdoutname ? : get_stdio(stdout);
+	stderrname = stderrname ? : get_stdio(stderr);
 
 	/* Print information */
 	puts("In:    ");
@@ -1118,12 +1167,6 @@ done:
 	if (!IS_ENABLED(CONFIG_SYS_CONSOLE_INFO_QUIET))
 		stdio_print_current_devices();
 
-#ifdef CONFIG_VIDCONSOLE_AS_LCD
-	if (strstr(stdoutname, CONFIG_VIDCONSOLE_AS_NAME))
-		printf("Warning: Please change '%s' to 'vidconsole' in stdout/stderr environment vars\n",
-		       CONFIG_VIDCONSOLE_AS_NAME);
-#endif
-
 	if (IS_ENABLED(CONFIG_SYS_CONSOLE_ENV_OVERWRITE)) {
 		/* set the environment variables (will overwrite previous env settings) */
 		for (i = 0; i < MAX_FILES; i++)
@@ -1204,3 +1247,37 @@ int console_init_r(void)
 }
 
 #endif /* CONFIG_IS_ENABLED(SYS_CONSOLE_IS_IN_ENV) */
+
+int console_remove_by_name(const char *name)
+{
+	int err = 0;
+
+#if CONFIG_IS_ENABLED(CONSOLE_MUX)
+	int fnum;
+
+	log_debug("removing console device %s\n", name);
+	for (fnum = 0; fnum < MAX_FILES; fnum++) {
+		struct stdio_dev **src, **dest;
+		int i;
+
+		log_debug("file %d: %d devices: ", fnum, cd_count[fnum]);
+		src = console_devices[fnum];
+		dest = src;
+		for (i = 0; i < cd_count[fnum]; i++, src++) {
+			struct stdio_dev *sdev = *src;
+			int ret = 0;
+
+			if (!strcmp(sdev->name, name))
+				ret = stdio_deregister_dev(sdev, true);
+			else
+				*dest++ = *src;
+			if (ret && !err)
+				err = ret;
+		}
+		cd_count[fnum] = dest - console_devices[fnum];
+		log_debug("now %d\n", cd_count[fnum]);
+	}
+#endif /* CONSOLE_MUX */
+
+	return err;
+}

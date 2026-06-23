@@ -3,8 +3,8 @@
  * Copyright (C) 2016-2018 Toradex AG
  */
 
-#include <common.h>
 #include <cpu_func.h>
+#include <env.h>
 #include <init.h>
 #include <net.h>
 #include <asm/arch/clock.h>
@@ -16,7 +16,6 @@
 #include <asm/gpio.h>
 #include <asm/mach-imx/iomux-v3.h>
 #include <asm/io.h>
-#include <common.h>
 #include <dm.h>
 #include <dm/platform_data/serial_mxc.h>
 #include <fdt_support.h>
@@ -66,7 +65,7 @@ int dram_init(void)
 }
 
 static iomux_v3_cfg_t const flash_detection_pads[] = {
-	MX7D_PAD_SD3_RESET_B__GPIO6_IO11 | MUX_PAD_CTRL(FLASH_DETECTION_CTRL),
+	MX7D_PAD_SD3_RESET_B__GPIO6_IO11 | MUX_PAD_CTRL(FLASH_DETECTION_CTRL) | MUX_MODE_SION,
 };
 
 static iomux_v3_cfg_t const uart1_pads[] = {
@@ -193,9 +192,9 @@ int board_init(void)
 	gd->bd->bi_boot_params = PHYS_SDRAM + 0x100;
 
 	/*
-	 * Enable GPIO on NAND_WE_B/eMMC_RST with 100k pull-down. eMMC_RST
+	 * Enable GPIO SION on NAND_WE_B/eMMC_RST with 100k pull-down. eMMC_RST
 	 * is pulled high with 4.7k for eMMC devices. This allows to reliably
-	 * detect eMMC/NAND flash
+	 * detect eMMC vs NAND flash.
 	 */
 	imx_iomux_v3_setup_multiple_pads(flash_detection_pads, ARRAY_SIZE(flash_detection_pads));
 	gpio_request(FLASH_DET_GPIO, "flash-detection-gpio");
@@ -224,7 +223,6 @@ int power_init_board(void)
 	struct udevice *dev;
 	int reg, ver;
 	int ret;
-
 
 	ret = pmic_get("pmic@33", &dev);
 	if (ret)
@@ -273,14 +271,6 @@ void reset_cpu(void)
 	mdelay(1);
 }
 #endif
-
-int checkboard(void)
-{
-	printf("Model: Toradex Colibri iMX7%c\n",
-	       is_cpu_type(MXC_CPU_MX7D) ? 'D' : 'S');
-
-	return 0;
-}
 
 #if defined(CONFIG_OF_LIBFDT) && defined(CONFIG_OF_BOARD_SETUP)
 int ft_board_setup(void *blob, struct bd_info *bd)
@@ -360,13 +350,17 @@ int board_late_init(void)
 	setup_lcd();
 #endif
 
-#if defined(CONFIG_CMD_USB_SDP)
-	if (is_boot_from_usb()) {
-		printf("Serial Downloader recovery mode, using sdp command\n");
+	if (IS_ENABLED(CONFIG_USB) && is_boot_from_usb()) {
 		env_set("bootdelay", "0");
-		env_set("bootcmd", "sdp 0");
+		if (IS_ENABLED(CONFIG_CMD_USB_SDP)) {
+			printf("Serial Downloader recovery mode, using sdp command\n");
+			env_set("bootcmd", "sdp 0");
+		} else if (IS_ENABLED(CONFIG_CMD_FASTBOOT)) {
+			printf("Fastboot recovery mode, using fastboot command\n");
+			env_set("bootcmd", "fastboot usb 0");
+		}
 	}
-#endif
+
 	if (is_emmc)
 		env_set("variant", "-emmc");
 	else

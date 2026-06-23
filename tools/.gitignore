@@ -29,12 +29,13 @@
 /mxsboot
 /ncb
 /prelink-riscv
+/preload_check_sign
 /printinitialenv
 /proftool
 /relocate-rela
 /spl_size_limit
 /sunxi-spl-image-builder
-/tools/generated/**/*.c
+/generated/**/*.c
 /update_octeon_header
 /version.h
 /xway-swap-bytes

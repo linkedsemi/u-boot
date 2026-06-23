@@ -2,7 +2,7 @@
 /*
  * Configuration settings for the TI OMAP3 EVM board.
  *
- * Copyright (C) 2006-2011 Texas Instruments Incorporated - http://www.ti.com/
+ * Copyright (C) 2006-2011 Texas Instruments Incorporated - https://www.ti.com/
  *
  * Author :
  *	Manikandan Pillai <mani.pillai@ti.com>
@@ -74,7 +74,6 @@
 	DEFAULT_MMC_TI_ARGS \
 	DEFAULT_FIT_TI_ARGS \
 	"fdtfile=" CONFIG_DEFAULT_FDT_FILE "\0" \
-	"fdt_high=0xffffffff\0" \
 	"console=ttyO0,115200n8\0" \
 	"bootdir=/boot\0" \
 	"bootenv=uEnv.txt\0" \

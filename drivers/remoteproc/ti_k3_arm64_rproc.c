@@ -2,12 +2,11 @@
 /*
  * Texas Instruments' K3 ARM64 Remoteproc driver
  *
- * Copyright (C) 2018 Texas Instruments Incorporated - http://www.ti.com/
+ * Copyright (C) 2018 Texas Instruments Incorporated - https://www.ti.com/
  *	Lokesh Vutla <lokeshvutla@ti.com>
  *
  */
 
-#include <common.h>
 #include <dm.h>
 #include <remoteproc.h>
 #include <errno.h>
@@ -20,7 +19,7 @@
 #include <linux/soc/ti/ti_sci_protocol.h>
 #include "ti_sci_proc.h"
 
-#define INVALID_ID	0xffff
+#define INVALID_ID	0xff
 
 #define GTC_CNTCR_REG	0x0
 #define GTC_CNTFID0_REG	0x20

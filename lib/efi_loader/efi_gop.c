@@ -5,11 +5,13 @@
  *  Copyright (c) 2016 Alexander Graf
  */
 
-#include <common.h>
+#define LOG_CATEGORY LOGC_EFI
+
 #include <dm.h>
 #include <efi_loader.h>
 #include <log.h>
 #include <malloc.h>
+#include <mapmem.h>
 #include <video.h>
 #include <asm/global_data.h>
 
@@ -24,6 +26,7 @@ static const efi_guid_t efi_gop_guid = EFI_GRAPHICS_OUTPUT_PROTOCOL_GUID;
  * @ops:	graphical output protocol interface
  * @info:	graphical output mode information
  * @mode:	graphical output mode
+ * @vdev:	backing video device
  * @bpix:	bits per pixel
  * @fb:		frame buffer
  */
@@ -32,6 +35,7 @@ struct efi_gop_obj {
 	struct efi_gop ops;
 	struct efi_gop_mode_info info;
 	struct efi_gop_mode mode;
+	struct udevice *vdev;
 	/* Fields we only have access to during init */
 	u32 bpix;
 	void *fb;
@@ -120,6 +124,7 @@ static __always_inline efi_status_t gop_blt_int(struct efi_gop *this,
 	u32 *fb32 = gopobj->fb;
 	u16 *fb16 = gopobj->fb;
 	struct efi_gop_pixel *buffer = __builtin_assume_aligned(bufferp, 4);
+	bool blt_to_video = (operation != EFI_BLT_VIDEO_TO_BLT_BUFFER);
 
 	if (delta) {
 		/* Check for 4 byte alignment */
@@ -242,6 +247,9 @@ static __always_inline efi_status_t gop_blt_int(struct efi_gop *this,
 		slineoff += swidth;
 		dlineoff += dwidth;
 	}
+
+	if (blt_to_video)
+		video_damage(gopobj->vdev, dx, dy, width, height);
 
 	return EFI_SUCCESS;
 }
@@ -467,10 +475,10 @@ efi_status_t efi_gop_register(void)
 	struct efi_gop_obj *gopobj;
 	u32 bpix, format, col, row;
 	u64 fb_base, fb_size;
-	void *fb;
 	efi_status_t ret;
 	struct udevice *vdev;
 	struct video_priv *priv;
+	struct video_uc_plat *plat;
 
 	/* We only support a single video output device for now */
 	if (uclass_first_device_err(UCLASS_VIDEO, &vdev)) {
@@ -483,9 +491,10 @@ efi_status_t efi_gop_register(void)
 	format = priv->format;
 	col = video_get_xsize(vdev);
 	row = video_get_ysize(vdev);
-	fb_base = (uintptr_t)priv->fb;
-	fb_size = priv->fb_size;
-	fb = priv->fb;
+
+	plat = dev_get_uclass_plat(vdev);
+	fb_base = IS_ENABLED(CONFIG_VIDEO_COPY) ? plat->copy_base : plat->base;
+	fb_size = plat->size;
 
 	switch (bpix) {
 	case VIDEO_BPP16:
@@ -547,7 +556,8 @@ efi_status_t efi_gop_register(void)
 	}
 	gopobj->info.pixels_per_scanline = col;
 	gopobj->bpix = bpix;
-	gopobj->fb = fb;
+	gopobj->fb = map_sysmem(fb_base, fb_size);
+	gopobj->vdev = vdev;
 
 	return EFI_SUCCESS;
 }

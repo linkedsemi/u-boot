@@ -48,6 +48,10 @@ Sources:
     :start-after: .. k3_rst_include_start_boot_sources
     :end-before: .. k3_rst_include_end_boot_sources
 
+.. include::  k3.rst
+    :start-after: .. k3_rst_include_start_boot_firmwares_sysfw
+    :end-before: .. k3_rst_include_end_boot_firmwares_sysfw
+
 Build procedure:
 ----------------
 0. Setup the environment variables:
@@ -65,16 +69,16 @@ Set the variables corresponding to this platform:
 .. include::  k3.rst
     :start-after: .. k3_rst_include_start_common_env_vars_defn
     :end-before: .. k3_rst_include_end_common_env_vars_defn
-.. code-block:: bash
+.. prompt:: bash $
 
- $ export UBOOT_CFG_CORTEXR=am64x_evm_r5_defconfig
- $ export UBOOT_CFG_CORTEXA=am64x_evm_a53_defconfig
- $ export TFA_BOARD=lite
- $ # we dont use any extra TFA parameters
- $ unset TFA_EXTRA_ARGS
- $ export OPTEE_PLATFORM=k3-am64x
- $ # we dont use any extra TFA parameters
- $ unset OPTEE_EXTRA_ARGS
+  export UBOOT_CFG_CORTEXR=am64x_evm_r5_defconfig
+  export UBOOT_CFG_CORTEXA=am64x_evm_a53_defconfig
+  export TFA_BOARD=lite
+  # we dont use any extra TFA parameters
+  unset TFA_EXTRA_ARGS
+  export OPTEE_PLATFORM=k3-am64x
+  # we dont use any extra TFA parameters
+  unset OPTEE_EXTRA_ARGS
 
 .. am64x_evm_rst_include_start_build_steps
 
@@ -107,7 +111,8 @@ Set the variables corresponding to this platform:
 .. am64x_evm_rst_include_end_build_steps
 
 Target Images
---------------
+-------------
+
 In order to boot we need tiboot3.bin, tispl.bin and u-boot.img.  Each SoC
 variant (GP, HS-FS, HS-SE) requires a different source for these files.
 
@@ -138,6 +143,30 @@ Image formats:
 
 .. image:: img/nodm_tispl.bin.svg
   :alt: tispl.bin image format
+
+OSPI:
+-----
+ROM supports booting from OSPI from offset 0x0.
+
+Flashing images to OSPI:
+
+Below commands can be used to download tiboot3.bin, tispl.bin, and u-boot.img,
+over tftp and then flash those to OSPI at their respective addresses.
+
+.. prompt:: bash =>
+
+  sf probe
+  tftp ${loadaddr} tiboot3.bin
+  sf update $loadaddr 0x0 $filesize
+  tftp ${loadaddr} tispl.bin
+  sf update $loadaddr 0x100000 $filesize
+  tftp ${loadaddr} u-boot.img
+  sf update $loadaddr 0x300000 $filesize
+
+Flash layout for OSPI:
+
+.. image:: img/ospi_sysfw-am64.svg
+  :alt: OSPI flash partition layout
 
 Switch Setting for Boot Mode
 ----------------------------

@@ -4,7 +4,6 @@
  *  Marcel Ziswiler <marcel@ziswiler.com>
  */
 
-#include <common.h>
 #include <env.h>
 #include <init.h>
 #include <log.h>
@@ -36,19 +35,11 @@ DECLARE_GLOBAL_DATA_PTR;
 static int pci_reset_status;
 #endif /* CONFIG_APALIS_T30_PCIE_EVALBOARD_INIT */
 
-int arch_misc_init(void)
+int misc_init_r(void)
 {
 	if (readl(NV_PA_BASE_SRAM + NVBOOTINFOTABLE_BOOTTYPE) ==
 	    NVBOOTTYPE_RECOVERY)
 		printf("USB recovery mode\n");
-
-	return 0;
-}
-
-int checkboard(void)
-{
-	printf("Model: Toradex Apalis T30 %dGB\n",
-	       (gd->ram_size == 0x40000000) ? 1 : 2);
 
 	return 0;
 }

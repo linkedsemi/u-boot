@@ -1,13 +1,12 @@
-/* SPDX-License-Identifier: GPL-2.0+ */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
- * Copyright (C) 2013, 2014 TQ-Systems
- * Author: Markus Niebel <markus.niebel@tq-group.com>
+ * Copyright (c) 2013-2014 TQ-Systems GmbH <u-boot@ew.tq-group.com>,
+ * D-82229 Seefeld, Germany.
+ * Author: Markus Niebel
  */
 
 #ifndef __TQMA6_BB__
 #define __TQMA6_BB__
-
-#include <common.h>
 
 int tqma6_bb_board_mmc_getwp(struct mmc *mmc);
 int tqma6_bb_board_mmc_getcd(struct mmc *mmc);

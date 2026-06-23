@@ -135,14 +135,12 @@
 	status = "okay";
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_nand0_default>;
-	arasan,has-mdma;
 
 	nand@0 {
 		reg = <0x0>;
 		#address-cells = <0x2>;
 		#size-cells = <0x1>;
-		nand-ecc-mode = "soft";
-		nand-ecc-algo = "bch";
+		nand-ecc-mode = "hw";
 		nand-rb = <0>;
 		label = "main-storage-0";
 		nand-ecc-step-size = <1024>;
@@ -178,8 +176,7 @@
 		reg = <0x1>;
 		#address-cells = <0x2>;
 		#size-cells = <0x1>;
-		nand-ecc-mode = "soft";
-		nand-ecc-algo = "bch";
+		nand-ecc-mode = "hw";
 		nand-rb = <0>;
 		label = "main-storage-1";
 		nand-ecc-step-size = <1024>;
@@ -275,7 +272,7 @@
 		};
 	};
 
-	pinctrl_i2c0_gpio: i2c0-gpio {
+	pinctrl_i2c0_gpio: i2c0-gpio-grp {
 		mux {
 			groups = "gpio0_6_grp", "gpio0_7_grp";
 			function = "gpio0";

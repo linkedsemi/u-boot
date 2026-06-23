@@ -1,7 +1,10 @@
 .. SPDX-License-Identifier: GPL-2.0+:
 
+.. index::
+   single: wdt (command)
+
 wdt command
-============
+===========
 
 Synopsis
 --------
@@ -70,8 +73,3 @@ Configuration
 -------------
 
 The command is only available if CONFIG_CMD_WDT=y.
-
-Return value
-------------
-
-The return value $? is 0 if the command succeeds, 1 upon failure.

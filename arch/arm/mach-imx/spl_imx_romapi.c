@@ -3,7 +3,6 @@
  * Copyright 2019 NXP
  */
 
-#include <common.h>
 #include <errno.h>
 #include <image.h>
 #include <imx_container.h>
@@ -34,8 +33,15 @@ ulong spl_romapi_raw_seekable_read(u32 offset, u32 size, void *buf)
 
 ulong __weak spl_romapi_get_uboot_base(u32 image_offset, u32 rom_bt_dev)
 {
-	return image_offset +
-		(CONFIG_SYS_MMCSD_RAW_MODE_U_BOOT_SECTOR * 512 - 0x8000);
+	u32 sector = 0;
+
+#if IS_ENABLED(CONFIG_SYS_MMCSD_RAW_MODE_U_BOOT_USE_SECTOR)
+	sector = CONFIG_SYS_MMCSD_RAW_MODE_U_BOOT_SECTOR;
+#elif IS_ENABLED(CONFIG_SPL_NAND_RAW_U_BOOT_USE_SECTOR)
+	sector = CONFIG_SPL_NAND_RAW_U_BOOT_SECTOR;
+#endif
+
+	return image_offset + sector * 512 - 0x8000;
 }
 
 static int is_boot_from_stream_device(u32 boot)
@@ -53,16 +59,10 @@ static int is_boot_from_stream_device(u32 boot)
 }
 
 static ulong spl_romapi_read_seekable(struct spl_load_info *load,
-				      ulong sector, ulong count,
+				      ulong offset, ulong byte,
 				      void *buf)
 {
-	u32 pagesize = *(u32 *)load->priv;
-	ulong byte = count * pagesize;
-	u32 offset;
-
-	offset = sector * pagesize;
-
-	return spl_romapi_raw_seekable_read(offset, byte, buf) / pagesize;
+	return spl_romapi_raw_seekable_read(offset, byte, buf);
 }
 
 static int spl_romapi_load_image_seekable(struct spl_image_info *spl_image,
@@ -106,21 +106,14 @@ static int spl_romapi_load_image_seekable(struct spl_image_info *spl_image,
 	if (IS_ENABLED(CONFIG_SPL_LOAD_FIT) && image_get_magic(header) == FDT_MAGIC) {
 		struct spl_load_info load;
 
-		memset(&load, 0, sizeof(load));
-		load.bl_len = pagesize;
-		load.read = spl_romapi_read_seekable;
-		load.priv = &pagesize;
-		return spl_load_simple_fit(spl_image, &load, offset / pagesize, header);
+		spl_load_init(&load, spl_romapi_read_seekable, NULL, pagesize);
+		return spl_load_simple_fit(spl_image, &load, offset, header);
 	} else if (IS_ENABLED(CONFIG_SPL_LOAD_IMX_CONTAINER) &&
 		   valid_container_hdr((void *)header)) {
 		struct spl_load_info load;
 
-		memset(&load, 0, sizeof(load));
-		load.bl_len = pagesize;
-		load.read = spl_romapi_read_seekable;
-		load.priv = &pagesize;
-
-		ret = spl_load_imx_container(spl_image, &load, offset / pagesize);
+		spl_load_init(&load, spl_romapi_read_seekable, NULL, pagesize);
+		ret = spl_load_imx_container(spl_image, &load, offset);
 	} else {
 		/* TODO */
 		puts("Can't support legacy image\n");
@@ -162,7 +155,7 @@ static ulong spl_romapi_read_stream(struct spl_load_info *load, ulong sector,
 			return 0;
 		}
 
-		ss->end = end;
+		ss->end += bytes;
 	}
 
 	memcpy(buf, (void *)(sector), count);
@@ -285,7 +278,7 @@ static int spl_romapi_load_image_stream(struct spl_image_info *spl_image,
 		ret = rom_api_download_image(p, 0, pg);
 
 		if (ret != ROM_API_OKAY) {
-			puts("Steam(USB) download failure\n");
+			puts("Stream(USB) download failure\n");
 			return -1;
 		}
 
@@ -305,7 +298,7 @@ static int spl_romapi_load_image_stream(struct spl_image_info *spl_image,
 		ret = rom_api_download_image(p, 0, pg);
 
 		if (ret != ROM_API_OKAY) {
-			puts("Steam(USB) download failure\n");
+			puts("Stream(USB) download failure\n");
 			return -1;
 		}
 
@@ -341,10 +334,7 @@ static int spl_romapi_load_image_stream(struct spl_image_info *spl_image,
 		ss.end = p;
 		ss.pagesize = pagesize;
 
-		memset(&load, 0, sizeof(load));
-		load.bl_len = 1;
-		load.read = spl_romapi_read_stream;
-		load.priv = &ss;
+		spl_load_init(&load, spl_romapi_read_stream, &ss, 1);
 
 		return spl_load_simple_fit(spl_image, &load, (ulong)phdr, phdr);
 	}
@@ -366,7 +356,7 @@ static int spl_romapi_load_image_stream(struct spl_image_info *spl_image,
 		printf("ROM download failure %d\n", imagesize);
 
 	memset(&load, 0, sizeof(load));
-	load.bl_len = 1;
+	spl_set_bl_len(&load, 1);
 	load.read = spl_ram_load_read;
 
 	if (IS_ENABLED(CONFIG_SPL_LOAD_IMX_CONTAINER))

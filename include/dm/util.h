@@ -11,20 +11,10 @@ struct dm_stats;
 #if CONFIG_IS_ENABLED(DM_WARN)
 #define dm_warn(fmt...) log(LOGC_DM, LOGL_WARNING, ##fmt)
 #else
-static inline void dm_warn(const char *fmt, ...)
-{
-}
+#define dm_warn(fmt...) log(LOGC_DM, LOGL_DEBUG, ##fmt)
 #endif
 
 struct list_head;
-
-/**
- * list_count_items() - Count number of items in a list
- *
- * @param head:		Head of list
- * Return: number of items, or 0 if empty
- */
-int list_count_items(struct list_head *head);
 
 /**
  * Dump out a tree of all devices starting @uclass

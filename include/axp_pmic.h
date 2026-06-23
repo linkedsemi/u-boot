@@ -32,10 +32,14 @@ enum {
 	AXP209_ID,
 	AXP221_ID,
 	AXP223_ID,
+	AXP313_ID,
+	AXP323_ID,
+	AXP717_ID,
 	AXP803_ID,
 	AXP806_ID,
 	AXP809_ID,
 	AXP813_ID,
+	AXP318_ID,
 };
 
 int axp_set_dcdc1(unsigned int mvolt);

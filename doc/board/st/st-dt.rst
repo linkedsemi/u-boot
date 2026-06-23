@@ -2,7 +2,7 @@
 .. sectionauthor:: Patrick Delaunay <patrick.delaunay@foss.st.com>
 
 U-Boot device tree bindings
-----------------------------
+---------------------------
 
 The U-Boot specific bindings are defined in the U-Boot directory:
 doc/device-tree-bindings
@@ -25,6 +25,7 @@ kernel binding directory = Documentation/devicetree/bindings/
 * display
 	- display/st,stm32-dsi.yaml
 	- display/st,stm32-ltdc.yaml
+        - display/st,stm32mp25-lvds.yaml
 * gpio
 	- pinctrl/st,stm32-pinctrl.yaml
 * hwlock

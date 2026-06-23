@@ -1,7 +1,7 @@
 /*
  * am335x_evm.h
  *
- * Copyright (C) 2011 Texas Instruments Incorporated - http://www.ti.com/
+ * Copyright (C) 2011 Texas Instruments Incorporated - https://www.ti.com/
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -204,11 +204,6 @@
 #define CFG_SYS_NAND_ECCBYTES	14
 #define CFG_SYS_NAND_U_BOOT_START	CONFIG_TEXT_BASE
 #endif
-#endif
-
-/* NAND support */
-#ifdef CONFIG_MTD_RAW_NAND
-#define GPMC_NAND_ECC_LP_x8_LAYOUT	1
 #endif
 
 #endif	/* ! __CONFIG_BALTOS_H */

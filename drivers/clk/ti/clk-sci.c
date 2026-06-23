@@ -2,13 +2,12 @@
 /*
  * Texas Instruments System Control Interface (TI SCI) clock driver
  *
- * Copyright (C) 2018 Texas Instruments Incorporated - http://www.ti.com/
+ * Copyright (C) 2018 Texas Instruments Incorporated - https://www.ti.com/
  *	Andreas Dannenberg <dannenberg@ti.com>
  *
  * Loosely based on Linux kernel sci-clk.c...
  */
 
-#include <common.h>
 #include <dm.h>
 #include <errno.h>
 #include <clk-uclass.h>

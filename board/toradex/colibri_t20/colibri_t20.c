@@ -3,7 +3,6 @@
  *  Copyright (C) 2012 Lucas Stach
  */
 
-#include <common.h>
 #include <env.h>
 #include <fdt_support.h>
 #include <init.h>
@@ -30,7 +29,7 @@ DECLARE_GLOBAL_DATA_PTR;
 #define PMU_SUPPLYENE_SYSINEN	(1<<5)
 #define PMU_SUPPLYENE_EXITSLREQ	(1<<1)
 
-int arch_misc_init(void)
+int misc_init_r(void)
 {
 	/* Disable PMIC sleep mode on low supply voltage */
 	struct udevice *dev;
@@ -66,16 +65,6 @@ int arch_misc_init(void)
 	if (readl(NV_PA_BASE_SRAM + NVBOOTINFOTABLE_BOOTTYPE) ==
 	    NVBOOTTYPE_RECOVERY)
 		printf("USB recovery mode\n");
-
-	return 0;
-}
-
-int checkboard(void)
-{
-	printf("Model: Toradex Colibri T20 %dMB V%s\n",
-	       (gd->ram_size == 0x10000000) ? 256 : 512,
-	       (get_nand_dev_by_index(0)->erasesize >> 10 == 512) ?
-	       ((gd->ram_size == 0x10000000) ? "1.1B" : "1.1C") : "1.2A");
 
 	return 0;
 }
@@ -158,7 +147,7 @@ void pin_mux_usb(void)
 }
 #endif
 
-#ifdef CONFIG_VIDEO_TEGRA20
+#ifdef CONFIG_VIDEO_TEGRA
 /*
  * Routine: pin_mux_display
  * Description: setup the pin muxes/tristate values for the LCD interface)
