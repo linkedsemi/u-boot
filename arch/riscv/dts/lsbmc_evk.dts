@@ -4,12 +4,19 @@
     compatible = "linkedsemi,bmc";
     #address-cells = <2>;
 	#size-cells = <2>;
+	clk_sdhci_core: clk-sdhci-core {
+		compatible = "fixed-clock";
+		#clock-cells = <0>;
+		clock-frequency = <4000000>;
+	};
 	chosen {
 		//bootargs = "earlycon console=ttyS0,1152000 norandmaps no4lvl debug";
-		bootargs = "earlycon console=ttyS0,1152000 norandmaps no4lvl loglevel=8 ignore_loglevel dyndbg=\"file drivers/usb/host/xhci* +p; file drivers/usb/core/hub.c +p; file drivers/net/ethernet/stmicro/stmmac* +p;\"";
-		// bootargs = "earlycon console=ttyS0,1152000 norandmaps no4lvl loglevel=8 ignore_loglevel dyndbg=\"file drivers/net/ethernet/stmicro/stmmac* +p;\"";
+		//bootargs = "earlycon console=ttyS0,1152000 norandmaps no4lvl loglevel=8 ignore_loglevel dyndbg=\"file drivers/usb/host/xhci* +p; file drivers/usb/core/hub.c +p; file drivers/net/ethernet/stmicro/stmmac* +p;\"";
+		//bootargs = "earlycon console=ttyS0,1152000 norandmaps no4lvl loglevel=8 ignore_loglevel dyndbg=\"file drivers/mmc/host/sdhci* +p; file drivers/mmc/core/core.c +p; file drivers/dma/* +p; file kernel/dma/* +p; file drivers/spi/spi-dw* +p;\"";
+		//bootargs = "earlycon console=ttyS0,1152000 norandmaps no4lvl loglevel=8 ignore_loglevel sdhci.debug_quirks=0x02000060 dyndbg=\"file drivers/net/ethernet/stmicro/stmmac* +p;\"";
+		bootargs = "earlycon console=ttyS0,1152000 norandmaps no4lvl loglevel=8 ignore_loglevel ";
 		stdout-path = &uart12;
-		linux,initrd-start = <0x1 0x80000000>; 
+		linux,initrd-start = <0x1 0x80000000>;
 		// linux,initrd-end = <0x1 0x83700e00>; //xuantie-rootfs
 		linux,initrd-end = <0x1 0x80369a00>;
 	};
@@ -45,6 +52,7 @@
 			riscv,isa-extensions = "i","m","a","f","d","c","v","zicbom","zicbop","zicboz","zihintpause",
 				"zfh","zba","zbb","zbc","zbs","sscofpmf","svinval","svnapot","svpbmt","xtheadc","xtheadvdot";
 			riscv,cbom-block-size = <64>;
+			riscv,cbop-block-size = <64>;
 			riscv,cboz-block-size = <64>;
 			reg = <0>;
 			i-cache-block-size = <64>;
@@ -60,7 +68,7 @@
 				compatible = "riscv,cpu-intc";
 				interrupt-controller;
 				#interrupt-cells = <1>;
-                #address-cells = <0>;
+                		#address-cells = <0>;
 			};
 		};
 
@@ -72,6 +80,7 @@
 			riscv,isa-extensions = "i","m","a","f","d","c","v","zicbom","zicbop","zicboz","zihintpause",
 				"zfh","zba","zbb","zbc","zbs","sscofpmf","svinval","svnapot","svpbmt","xtheadc","xtheadvdot";
 			riscv,cbom-block-size = <64>;
+			riscv,cbop-block-size = <64>;
 			riscv,cboz-block-size = <64>;
 			reg = <1>;
 			i-cache-block-size = <64>;
@@ -87,7 +96,7 @@
 				compatible = "riscv,cpu-intc";
 				interrupt-controller;
 				#interrupt-cells = <1>;
-                #address-cells = <0>;
+                		#address-cells = <0>;
 			};
 		};
 
@@ -99,6 +108,7 @@
 			riscv,isa-extensions = "i","m","a","f","d","c","v","zicbom","zicbop","zicboz","zihintpause",
 				"zfh","zba","zbb","zbc","zbs","sscofpmf","svinval","svnapot","svpbmt","xtheadc","xtheadvdot";
 			riscv,cbom-block-size = <64>;
+			riscv,cbop-block-size = <64>;
 			riscv,cboz-block-size = <64>;
 			reg = <2>;
 			i-cache-block-size = <64>;
@@ -114,7 +124,7 @@
 				compatible = "riscv,cpu-intc";
 				interrupt-controller;
 				#interrupt-cells = <1>;
-                #address-cells = <0>;
+                		#address-cells = <0>;
 			};
 		};
 
@@ -126,6 +136,7 @@
 			riscv,isa-extensions = "i","m","a","f","d","c","v","zicbom","zicbop","zicboz","zihintpause",
 				"zfh","zba","zbb","zbc","zbs","sscofpmf","svinval","svnapot","svpbmt","xtheadc","xtheadvdot";
 			riscv,cbom-block-size = <64>;
+			riscv,cbop-block-size = <64>;
 			riscv,cboz-block-size = <64>;
 			reg = <3>;
 			i-cache-block-size = <64>;
@@ -141,7 +152,7 @@
 				compatible = "riscv,cpu-intc";
 				interrupt-controller;
 				#interrupt-cells = <1>;
-                #address-cells = <0>;
+                		#address-cells = <0>;
 			};
 		};
 		l2_cache: l2-cache {
@@ -189,7 +200,7 @@
 			compatible = "snps,dw-apb-uart";
 			reg = <0x00 0x9600e000 0x0 0x1000>;
 			interrupts = <71 4>;
-            clock-frequency = <37037000>;
+			clock-frequency = <37037000>;
 			current-speed = <1152000>;
 			reg-shift = <2>;
 			reg-io-width = <4>;
@@ -237,57 +248,88 @@
 		// 		full-duplex;
 		// 	};
 		// };
-		sgmii0: ethernet@65000000 {
-			compatible = "snps,dwmac","snps,dwmac-5.20";
-			reg = <0x0 0x65000000 0x0 0x10000>;
-			interrupts = <13 4>;
-			interrupt-names = "macirq";
-			phy-mode = "sgmii";
-			rx-fifo-depth = <2048>;
-			tx-fifo-depth = <2048>;
-			snps,ps-speed = <1000>;
-			snps,tso;
-			snps,txpbl = <16>;
-			snps,rxpbl = <16>;
+		// sgmii0: ethernet@65000000 {
+		// 	compatible = "snps,dwmac","snps,dwmac-5.20";
+		// 	reg = <0x0 0x65000000 0x0 0x10000>;
+		// 	interrupts = <13 4>;
+		// 	interrupt-names = "macirq";
+		// 	phy-mode = "sgmii";
+		// 	rx-fifo-depth = <2048>;
+		// 	tx-fifo-depth = <2048>;
+		// 	snps,ps-speed = <1000>;
+		// 	snps,tso;
+		// 	snps,txpbl = <16>;
+		// 	snps,rxpbl = <16>;
+		// 	status = "okay";
+
+		// 	snps,mtl-rx-config = <&mtl_rx_setup_1>;
+		// 	snps,mtl-tx-config = <&mtl_tx_setup_1>;
+		// 	snps,axi-config = <&stmmac_axi_config_0>;
+		// 	stmmac_axi_config_0: stmmac-axi-config {
+		// 		snps,wr_osr_lmt = <0x7>;
+		// 		snps,rd_osr_lmt = <0x7>;
+		// 		snps,blen = <0 0 0 0 16 8 4>;
+		// 	};
+		// 	mtl_rx_setup_1: rx-queues-config {
+		// 		snps,rx-queues-to-use = <4>;
+		// 		queue0 {};
+		// 		queue1 {};
+		// 		queue2 {};
+		// 		queue3 {};
+		// 	};
+
+		// 	mtl_tx_setup_1: tx-queues-config {
+		// 		snps,tx-queues-to-use = <4>;
+		// 		queue0 {};
+		// 		queue1 {};
+		// 		queue2 {};
+		// 		queue3 {};
+		// 	};
+		// 	fixed-link {
+		// 		speed = <1000>;
+		// 		full-duplex;
+		// 	};
+		// };
+
+		sdhci: mmc@92000000 {
+			compatible = "snps,dwcmshc-sdhci";
+			reg = <0x0 0x92000000 0x0 0x4000>;
+			interrupts = <60 4>;
+			clocks = <&clk_sdhci_core>;
+			clock-names = "core";
+			/* eMMC, 8-bit data lines */
+			bus-width = <1>;
+			non-removable;
+			no-sd;
+			no-sdio;
+			// cap-mmc-highspeed;
+			status = "okay";
+		};
+		fwspi: spi@61000000 {
+			#address-cells = <1>;
+			#size-cells = <0>;
+			compatible = "snps,dwc-ssi-1.01a";
+			reg = <0x0 0x61000000 0x0 0x1000>;
+			clocks = <&clk_sdhci_core>;
+			interrupts = <44 4>;
+			num-cs = <2>;
+			reg-io-width = <4>;
 			status = "okay";
 
-			snps,mtl-rx-config = <&mtl_rx_setup_1>;
-			snps,mtl-tx-config = <&mtl_tx_setup_1>;
-			snps,axi-config = <&stmmac_axi_config_0>;
-			stmmac_axi_config_0: stmmac-axi-config {
-				snps,wr_osr_lmt = <0x7>;
-				snps,rd_osr_lmt = <0x7>;
-				snps,blen = <0 0 0 0 16 8 4>;
-			};
-			mtl_rx_setup_1: rx-queues-config {
-				snps,rx-queues-to-use = <4>;
-				queue0 {};
-				queue1 {};
-				queue2 {};
-				queue3 {};
-			};
-
-			mtl_tx_setup_1: tx-queues-config {
-				snps,tx-queues-to-use = <4>;
-				queue0 {};
-				queue1 {};
-				queue2 {};
-				queue3 {};
-			};
-			fixed-link {
-				speed = <1000>;
-				full-duplex;
+			flash@0 {
+				compatible = "jedec,spi-nor";
+				reg = <0>;
+				spi-max-frequency = <50000>;
 			};
 		};
+		// xhci0: usb@94000000 {
+		// 	compatible = "generic-xhci";
+		// 	reg = <0x0 0x94000000 0x0 0x10000>;
+		// 	interrupts = <65 4>;
+		// 	// phys = <&usb_phy PHY_TYPE_USB3>;
+		// 	status = "okay";
 
-		xhci0: usb@94000000 {
-			compatible = "generic-xhci";
-			reg = <0x0 0x94000000 0x0 0x10000>;
-			interrupts = <65 4>;
-			// phys = <&usb_phy PHY_TYPE_USB3>;
-			status = "okay";
-
-		};
+		// };
 
 		pipe_syscon: syscon@90928000 {
 			compatible = "syscon";
