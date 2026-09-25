@@ -18,7 +18,11 @@
 		stdout-path = &uart12;
 		linux,initrd-start = <0x1 0x80000000>;
 		// linux,initrd-end = <0x1 0x83700e00>; //xuantie-rootfs
-		linux,initrd-end = <0x1 0x80369a00>;
+		linux,initrd-end = <0x1 0x805e8000>;
+	};
+
+	aliases {
+		vuart0 = &vuart0;
 	};
 
 	memory@c0000000 {
@@ -354,8 +358,8 @@
 			snps,axi-max-burst-len = <16>;
 			status = "okay";
 		};
-		mbox: mailbox@b0800000 {
-			compatible = "linkedsemi,mbox";
+		mbox0: mailbox@b0800000 {
+			compatible = "linkedsemi,ls-mbox";
 			reg = <0x0 0xb0800000 0x0 0x10000>;
 			interrupts = <104 4>;
 			#mbox-cells = <5>;
@@ -365,6 +369,19 @@
 			rx-intr-clr-offset = <0x1f8>;
 			status = "okay";
 
+		};
+		vuart0: vuart@b0000100 {
+			compatible = "linkedsemi,ls-vuart";
+			reg = <0x0 0xb0000100 0x0 0x100>;
+			mboxes = <&mbox0 0 8 2 8 2>;
+			status = "okay";
+		};
+		kcs0: kcs@b0000200 {
+			compatible = "linkedsemi,ls-kcs-bmc";
+			reg = <0x0 0xb0000200 0x0 0x100>;
+			kcs_chan = <1>;
+			mboxes = <&mbox0 1 4 2 4 2>;
+			status = "okay";
 		};
 		// xhci0: usb@94000000 {
 		// 	compatible = "generic-xhci";
