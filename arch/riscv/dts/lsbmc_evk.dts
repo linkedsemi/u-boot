@@ -360,7 +360,7 @@
 		};
 		mbox0: mailbox@b0800000 {
 			compatible = "linkedsemi,ls-mbox";
-			reg = <0x0 0xb0800000 0x0 0x10000>;
+			reg = <0x0 0xb0800000 0x0 0x800>;
 			interrupts = <104 4>;
 			#mbox-cells = <5>;
 			tx-syscon = <&cpu1_syscon>;
@@ -370,17 +370,17 @@
 			status = "okay";
 
 		};
-		vuart0: vuart@b0000100 {
+		vuart0: vuart@b0800810 {
 			compatible = "linkedsemi,ls-vuart";
-			reg = <0x0 0xb0000100 0x0 0x100>;
-			mboxes = <&mbox0 0 8 2 8 2>;
+			reg = <0x0 0xb0800810 0x0 0x40>;
+			mboxes = <&mbox0 1 8 3 8 3>;
 			status = "okay";
 		};
-		kcs0: kcs@b0000200 {
+		kcs0: kcs@b0800800 {
 			compatible = "linkedsemi,ls-kcs-bmc";
-			reg = <0x0 0xb0000200 0x0 0x100>;
+			reg = <0x0 0xb0800800 0x0 0x10>;
 			kcs_chan = <1>;
-			mboxes = <&mbox0 1 4 2 4 2>;
+			mboxes = <&mbox0 0 4 3 4 3>;
 			status = "okay";
 		};
 		// xhci0: usb@94000000 {
