@@ -1,1 +1,0 @@
-obj-y := lsbmc_evk.o

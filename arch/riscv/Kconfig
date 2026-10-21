@@ -67,8 +67,8 @@ config TARGET_XILINX_MBV
 config TARGET_ASPEED_AST2700_IBEX
 	bool "Support Ibex RISC-V cores on Aspeed AST2700 SoC"
 
-config TARGET_LSBMC_EVK
-	bool "Support Linkedsemi BMC EVK"
+config TARGET_EVB_LS2010
+	bool "Support Linkedsemi LS2010 EVB"
 	
 endchoice
 
@@ -130,7 +130,7 @@ source "board/spacemit/k1/Kconfig"
 source "board/starfive/visionfive2/Kconfig"
 source "board/thead/th1520_lpi4a/Kconfig"
 source "board/xilinx/mbv/Kconfig"
-source "board/linkedsemi/lsbmc_evk/Kconfig"
+source "board/linkedsemi/evb_ls2010/Kconfig"
 
 # platform-specific options below
 source "arch/riscv/cpu/andes/Kconfig"

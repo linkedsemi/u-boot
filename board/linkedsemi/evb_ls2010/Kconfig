@@ -1,13 +1,13 @@
-if TARGET_LSBMC_EVK
+if TARGET_EVB_LS2010
 
 config SYS_BOARD
-    default "lsbmc_evk"
+    default "evb_ls2010"
 
 config SYS_VENDOR
     default "linkedsemi"
 
 config SYS_CONFIG_NAME
-    default "lsbmc_evk"
+    default "evb_ls2010"
 
 config SYS_CPU
     default "generic"

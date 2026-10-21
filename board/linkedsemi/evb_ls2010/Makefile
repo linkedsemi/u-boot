@@ -1,0 +1,1 @@
+obj-y := evb_ls2010.o
